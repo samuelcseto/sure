@@ -1,0 +1,112 @@
+<%# locals: (trading212_item:) %>
+
+<%= tag.div id: dom_id(trading212_item) do %>
+  <details open class="group bg-container p-4 shadow-border-xs rounded-xl">
+    <summary class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <%= icon "chevron-right", class: "group-open:transform group-open:rotate-90" %>
+
+        <div class="flex items-center justify-center h-8 w-8 bg-blue-600/10 rounded-full">
+          <% if trading212_item.logo.attached? %>
+            <%= image_tag trading212_item.logo, class: "rounded-full h-full w-full", loading: "lazy" %>
+          <% else %>
+            <div class="flex items-center justify-center">
+              <%= tag.p trading212_item.name.first.upcase, class: "text-blue-600 text-xs font-medium" %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="pl-1 text-sm">
+          <div class="flex items-center gap-2">
+            <%= tag.p trading212_item.name, class: "font-medium text-primary" %>
+            <% if trading212_item.scheduled_for_deletion? %>
+              <p class="text-destructive text-sm animate-pulse"><%= t(".deletion_in_progress", default: "Deletion in progress...") %></p>
+            <% end %>
+          </div>
+          <% if trading212_item.accounts.any? %>
+            <p class="text-xs text-secondary">
+              <%= trading212_item.institution_summary %>
+            </p>
+          <% end %>
+          <% if trading212_item.syncing? %>
+            <div class="text-secondary flex items-center gap-1">
+              <%= icon "loader", size: "sm", class: "animate-spin" %>
+              <%= tag.span t(".syncing", default: "Syncing...") %>
+            </div>
+          <% elsif trading212_item.sync_error.present? %>
+            <div class="text-secondary flex items-center gap-1">
+              <%= render DS::Tooltip.new(text: trading212_item.sync_error, icon: "alert-circle", size: "sm", color: "destructive") %>
+              <%= tag.span t(".error", default: "Error"), class: "text-destructive" %>
+            </div>
+          <% else %>
+            <p class="text-secondary">
+              <% if trading212_item.last_synced_at %>
+                <% if trading212_item.sync_status_summary %>
+                  <%= t(".status_with_summary", default: "Last synced %{timestamp} ago • %{summary}", timestamp: time_ago_in_words(trading212_item.last_synced_at), summary: trading212_item.sync_status_summary) %>
+                <% else %>
+                  <%= t(".status", default: "Last synced %{timestamp} ago", timestamp: time_ago_in_words(trading212_item.last_synced_at)) %>
+                <% end %>
+              <% else %>
+                <%= t(".status_never", default: "Never synced") %>
+              <% end %>
+            </p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <% if Rails.env.development? %>
+          <%= button_to sync_trading212_item_path(trading212_item), method: :post, class: "p-1.5 rounded-lg hover:bg-secondary", data: { turbo_frame: "_top" } do %>
+            <%= icon "refresh-cw", size: "sm" %>
+          <% end %>
+        <% end %>
+
+        <%= render DS::Menu.new do |menu| %>
+          <% menu.with_item(
+            variant: "button",
+            text: t(".delete", default: "Delete"),
+            icon: "trash-2",
+            href: trading212_item_path(trading212_item),
+            method: :delete,
+            confirm: CustomConfirm.for_resource_deletion(trading212_item.name, high_severity: true)
+          ) %>
+        <% end %>
+      </div>
+    </summary>
+
+    <% unless trading212_item.scheduled_for_deletion? %>
+      <div class="space-y-4 mt-4">
+        <% if trading212_item.accounts.any? %>
+          <%= render "accounts/index/account_groups", accounts: trading212_item.accounts %>
+        <% end %>
+
+        <% unlinked_count = trading212_item.unlinked_accounts_count %>
+        <% linked_count = trading212_item.linked_accounts_count %>
+        <% total_count = trading212_item.total_accounts_count %>
+
+        <% if unlinked_count > 0 %>
+          <div class="p-4 flex flex-col gap-3 items-center justify-center">
+            <p class="text-primary font-medium text-sm"><%= t(".setup_needed", default: "Account setup needed") %></p>
+            <p class="text-secondary text-sm"><%= t(".setup_description", default: "%{linked} of %{total} accounts linked", linked: linked_count, total: total_count) %></p>
+            <%= render DS::Link.new(
+              text: t(".setup_action", default: "Set up accounts"),
+              icon: "settings",
+              variant: "primary",
+              href: setup_accounts_trading212_item_path(trading212_item),
+              frame: :modal
+            ) %>
+          </div>
+        <% elsif trading212_item.accounts.empty? && total_count == 0 %>
+          <div class="p-4 flex flex-col gap-3 items-center justify-center">
+            <p class="text-primary font-medium text-sm"><%= t(".no_accounts_title", default: "No accounts found") %></p>
+            <p class="text-secondary text-sm"><%= t(".no_accounts_description", default: "Sync to discover accounts from Trading 212") %></p>
+            <%= button_to sync_trading212_item_path(trading212_item), method: :post, class: "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg text-inverse bg-inverse hover:bg-inverse-hover", data: { turbo_frame: "_top" } do %>
+              <%= icon "refresh-cw", size: "sm" %>
+              <%= t(".sync_action", default: "Sync now") %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </details>
+<% end %>

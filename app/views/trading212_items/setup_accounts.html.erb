@@ -1,0 +1,96 @@
+<% content_for :title, "Set Up Trading 212 Accounts" %>
+
+<%= render DS::Dialog.new do |dialog| %>
+  <% dialog.with_header(title: t(".title", default: "Set Up Trading 212 Accounts")) do %>
+    <div class="flex items-center gap-2">
+      <%= icon "building-2", class: "text-primary" %>
+      <span class="text-primary"><%= t(".subtitle", default: "Link accounts to start syncing") %></span>
+    </div>
+  <% end %>
+
+  <% dialog.with_body do %>
+    <%= form_with url: complete_account_setup_trading212_item_path(@trading212_item),
+                  method: :post,
+                  local: true,
+                  data: {
+                    controller: "loading-button",
+                    action: "submit->loading-button#showLoading",
+                    loading_button_loading_text_value: t(".creating_accounts", default: "Creating accounts..."),
+                    turbo_frame: "_top"
+                  },
+                  class: "space-y-6" do |form| %>
+
+      <div class="space-y-4">
+        <% if @trading212_accounts.empty? %>
+          <div class="p-8 flex flex-col gap-3 items-center justify-center text-center">
+            <%= icon "check-circle", size: "lg", class: "text-success" %>
+            <p class="text-primary font-medium"><%= t(".no_accounts_to_setup", default: "No accounts to set up") %></p>
+            <p class="text-secondary text-sm"><%= t(".all_accounts_linked", default: "All Trading 212 accounts have been linked.") %></p>
+          </div>
+        <% else %>
+          <div class="bg-surface border border-primary p-4 rounded-lg">
+            <div class="flex items-start gap-3">
+              <%= icon "info", size: "sm", class: "text-primary mt-0.5 flex-shrink-0" %>
+              <div>
+                <p class="text-sm text-primary">
+                  <%= t(".info", default: "Select which accounts you want to link. Up to 1 year of transaction history will be synced.") %>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <% @trading212_accounts.each do |trading212_account| %>
+            <div class="border border-primary rounded-lg p-4">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <%= check_box_tag "account_ids[]", trading212_account.id, true, class: "mt-1" %>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-medium text-primary">
+                      <%= trading212_account.name %>
+                    </h3>
+                    <% if trading212_account.investment? %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        <%= icon "chart-line", size: "xs", class: "mr-1" %>
+                        Investment
+                      </span>
+                    <% else %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                        <%= icon "wallet", size: "xs", class: "mr-1" %>
+                        Cash
+                      </span>
+                    <% end %>
+                  </div>
+                  <div class="text-xs text-secondary mt-1">
+                    <%= trading212_account.currency %> • Balance: <%= number_to_currency(trading212_account.current_balance || 0, unit: trading212_account.currency) %>
+                    <% if trading212_account.investment? %>
+                      • Tracks stock purchases as trades
+                    <% else %>
+                      • Tracks card spending and deposits
+                    <% end %>
+                  </div>
+                </div>
+              </label>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="flex gap-3">
+        <%= render DS::Button.new(
+          text: t(".create_accounts", default: "Create Accounts"),
+          variant: "primary",
+          icon: "plus",
+          type: "submit",
+          class: "flex-1",
+          disabled: @trading212_accounts.empty?,
+          data: { loading_button_target: "button" }
+        ) %>
+        <%= render DS::Link.new(
+          text: t(".cancel", default: "Cancel"),
+          variant: "secondary",
+          href: accounts_path
+        ) %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

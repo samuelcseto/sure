@@ -1,0 +1,60 @@
+<%= turbo_frame_tag "modal" do %>
+  <%= render DS::Dialog.new do |dialog| %>
+    <% dialog.with_header(title: t(".title", default: "Connect Trading 212 Account")) %>
+
+    <% dialog.with_body do %>
+      <div class="space-y-4">
+        <% if @trading212_items.empty? %>
+          <div class="p-8 flex flex-col gap-3 items-center justify-center text-center">
+            <%= icon "alert-circle", size: "lg", class: "text-warning" %>
+            <p class="text-primary font-medium"><%= t(".no_credentials", default: "No Trading 212 credentials configured") %></p>
+            <p class="text-secondary text-sm"><%= t(".configure_first", default: "Please configure your Trading 212 API credentials in Settings > Providers first.") %></p>
+          </div>
+
+          <div class="flex gap-2 justify-end pt-4">
+            <%= link_to t(".go_to_settings", default: "Go to Settings"), settings_providers_path,
+                class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-inverse bg-inverse hover:bg-inverse-hover",
+                data: { turbo_frame: "_top" } %>
+          </div>
+        <% else %>
+          <p class="text-sm text-secondary">
+            <%= t(".description", default: "Your Trading 212 account will be synced automatically. After the first sync, you can link it to track your transactions.") %>
+          </p>
+
+          <div class="space-y-2">
+            <% @trading212_items.each do |item| %>
+              <div class="flex items-start gap-3 p-3 border border-primary rounded-lg">
+                <div class="flex-1">
+                  <div class="font-medium text-sm text-primary">
+                    <%= item.name %>
+                  </div>
+                  <div class="text-xs text-secondary mt-1">
+                    <%= item.sync_status_summary %>
+                  </div>
+                </div>
+                <% if item.trading212_accounts.any? %>
+                  <%= link_to t(".setup_accounts", default: "Setup Accounts"),
+                      setup_accounts_trading212_item_path(item),
+                      class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-inverse bg-inverse hover:bg-inverse-hover",
+                      data: { turbo_frame: "_top" } %>
+                <% else %>
+                  <%= button_to t(".sync_now", default: "Sync Now"),
+                      sync_trading212_item_path(item),
+                      method: :post,
+                      class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-primary button-bg-secondary hover:button-bg-secondary-hover",
+                      data: { turbo_frame: "_top" } %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="flex gap-2 justify-end pt-4">
+            <%= link_to t(".cancel", default: "Cancel"), @return_to || new_account_path,
+                class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-primary button-bg-secondary hover:button-bg-secondary-hover",
+                data: { turbo_frame: "_top", action: "DS--dialog#close" } %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

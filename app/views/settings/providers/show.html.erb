@@ -38,4 +38,10 @@
       <%= render "settings/providers/coinstats_panel" %>
     </turbo-frame>
   <% end %>
+
+  <%= settings_section title: "Trading 212", collapsible: true, open: false do %>
+    <turbo-frame id="trading212-providers-panel">
+      <%= render "settings/providers/trading212_panel" %>
+    </turbo-frame>
+  <% end %>
 </div>

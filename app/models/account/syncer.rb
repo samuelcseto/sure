@@ -6,7 +6,7 @@ class Account::Syncer
   end
 
   def perform_sync(sync)
-    Rails.logger.info("Processing balances (#{account.linked? ? 'reverse' : 'forward'})")
+    Rails.logger.info("Processing balances (#{account.sync_strategy})")
     import_market_data
     materialize_balances
   end
@@ -17,8 +17,7 @@ class Account::Syncer
 
   private
     def materialize_balances
-      strategy = account.linked? ? :reverse : :forward
-      Balance::Materializer.new(account, strategy: strategy).materialize_balances
+      Balance::Materializer.new(account, strategy: account.sync_strategy).materialize_balances
     end
 
     # Syncs all the exchange rates + security prices this account needs to display historical chart data

@@ -66,4 +66,23 @@ module Account::Linkable
 
     providers.all?(&:can_delete_holdings?)
   end
+
+  # Determines the sync strategy for holdings/balance calculation
+  # :reverse - Provider syncs current holdings snapshot (e.g., Plaid, SimpleFIN)
+  # :forward - Provider only syncs trades, holdings calculated from trades (e.g., Trading212)
+  def sync_strategy
+    return :forward unless linked?
+
+    # If any provider syncs holdings, use reverse strategy
+    # If providers only sync trades (not holdings), use forward strategy
+    if providers.any? { |p| p.respond_to?(:syncs_holdings?) && p.syncs_holdings? }
+      :reverse
+    elsif providers.all? { |p| p.respond_to?(:syncs_holdings?) && !p.syncs_holdings? }
+      :forward
+    else
+      # Legacy providers (Plaid, SimpleFIN) use reverse strategy by default
+      # as they typically sync current holdings
+      :reverse
+    end
+  end
 end

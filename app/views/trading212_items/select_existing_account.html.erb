@@ -1,0 +1,58 @@
+<%= turbo_frame_tag "modal" do %>
+  <%= render DS::Dialog.new do |dialog| %>
+    <% dialog.with_header(title: t(".title", default: "Link to Trading 212")) %>
+
+    <% dialog.with_body do %>
+      <div class="space-y-4">
+        <% if @trading212_items.empty? %>
+          <div class="p-8 flex flex-col gap-3 items-center justify-center text-center">
+            <%= icon "alert-circle", size: "lg", class: "text-warning" %>
+            <p class="text-primary font-medium"><%= t(".no_credentials", default: "No Trading 212 credentials configured") %></p>
+            <p class="text-secondary text-sm"><%= t(".configure_first", default: "Please configure your Trading 212 API credentials in Settings > Providers first.") %></p>
+          </div>
+
+          <div class="flex gap-2 justify-end pt-4">
+            <%= link_to t(".go_to_settings", default: "Go to Settings"), settings_providers_path,
+                class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-inverse bg-inverse hover:bg-inverse-hover",
+                data: { turbo_frame: "_top" } %>
+          </div>
+        <% else %>
+          <p class="text-sm text-secondary">
+            <%= t(".description", default: "Select a Trading 212 account to link to this account.") %>
+          </p>
+
+          <form action="<%= link_existing_account_trading212_items_path %>" method="post" class="space-y-4" data-turbo-frame="_top">
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= hidden_field_tag :account_id, @account_id %>
+
+            <div class="space-y-2">
+              <% @trading212_items.each do |item| %>
+                <% item.trading212_accounts.each do |trading212_account| %>
+                  <label class="flex items-start gap-3 p-3 border border-primary rounded-lg hover:bg-subtle cursor-pointer transition-colors">
+                    <%= radio_button_tag "trading212_account_id", trading212_account.id, false, class: "mt-1" %>
+                    <div class="flex-1">
+                      <div class="font-medium text-sm text-primary">
+                        <%= trading212_account.name %>
+                      </div>
+                      <div class="text-xs text-secondary mt-1">
+                        <%= item.name %> • <%= trading212_account.currency %>
+                      </div>
+                    </div>
+                  </label>
+                <% end %>
+              <% end %>
+            </div>
+
+            <div class="flex gap-2 justify-end pt-4">
+              <%= link_to t(".cancel", default: "Cancel"), accounts_path,
+                  class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-primary button-bg-secondary hover:button-bg-secondary-hover",
+                  data: { turbo_frame: "_top", action: "DS--dialog#close" } %>
+              <%= submit_tag t(".link_account", default: "Link Account"),
+                  class: "inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg text-inverse bg-inverse hover:bg-inverse-hover disabled:button-bg-disabled" %>
+            </div>
+          </form>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

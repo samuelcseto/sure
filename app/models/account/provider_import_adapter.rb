@@ -320,7 +320,7 @@ class Account::ProviderImportAdapter
   # @param external_id [String, nil] Provider's unique ID (optional, for deduplication)
   # @param source [String] Provider name
   # @return [Entry] The created entry with trade
-  def import_trade(security:, quantity:, price:, amount:, currency:, date:, name: nil, external_id: nil, source:)
+  def import_trade(security:, quantity:, price:, amount:, currency:, date:, name: nil, external_id: nil, source:, price_currency: nil)
     raise ArgumentError, "security is required" if security.nil?
     raise ArgumentError, "source is required" if source.blank?
 
@@ -352,12 +352,16 @@ class Account::ProviderImportAdapter
         raise ArgumentError, "Entry with external_id '#{external_id}' already exists with different entryable type: #{entry.entryable_type}"
       end
 
+      # Trade price can be in a different currency than the entry amount
+      # (e.g., USD price for a stock purchased with EUR)
+      trade_currency = price_currency.presence || currency
+
       # Always update Trade attributes (works for both new and existing records)
       entry.entryable.assign_attributes(
         security: security,
         qty: quantity,
         price: price,
-        currency: currency
+        currency: trade_currency
       )
 
       entry.assign_attributes(

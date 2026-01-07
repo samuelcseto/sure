@@ -11,6 +11,7 @@ class AccountsController < ApplicationController
     @lunchflow_items = family.lunchflow_items.ordered
     @enable_banking_items = family.enable_banking_items.ordered.includes(:syncs)
     @coinstats_items = family.coinstats_items.ordered.includes(:coinstats_accounts, :accounts, :syncs)
+    @trading212_items = family.trading212_items.ordered.includes(:syncs)
 
     # Precompute per-item maps to avoid queries in the view
     @simplefin_sync_stats_map = {}
